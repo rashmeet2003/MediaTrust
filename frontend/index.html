@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialMediaContentCheck</title>
+    <style>
+        body { font-family: sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; border-bottom: 1px solid #334155; padding-bottom: 20px; margin-bottom: 30px; }
+        h1 { color: #60a5fa; margin: 0; }
+        p { color: #94a3b8; }
+        .card { background-color: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 20px; }
+        textarea { width: 100%; height: 100px; background: #0f172a; border: 1px solid #475569; color: white; padding: 10px; border-radius: 5px; box-sizing: border-box; }
+        button { background: #2563eb; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #1d4ed8; }
+        .result-box { background: #0f172a; padding: 15px; border-radius: 5px; margin-top: 15px; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🛡️ SocialMediaContentCheck</h1>
+            <p>Explainable AI Framework for Social Media Provenance & Risk Assessment</p>
+        </header>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- Input Form -->
+            <div class="card">
+                <h3>Content Analyzer</h3>
+                <form id="analyzeForm">
+                    <label style="font-size: 14px; display: block; margin-bottom: 5px;">Post Text / Claims:</label>
+                    <textarea id="postText" placeholder="Paste text here... (e.g. Urgent viral leak!)"></textarea>
+                    <button type="submit">Analyze Content</button>
+                </form>
+            </div>
+
+            <!-- Results -->
+            <div class="card">
+                <h3>Risk & XAI Report</h3>
+                <div id="resultArea" style="color: #64748b; text-align: center; padding-top: 40px;">
+                    Submit content to view AI risk assessment.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const text = document.getElementById('postText').value;
+            if(!text) return alert('Please enter some text');
+
+            const formData = new FormData();
+            formData.append('text', text);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                const res = data.result;
+
+                let color = res.risk_level === 'HIGH RISK' ? '#f87171' : res.risk_level === 'MEDIUM RISK' ? '#fbbf24' : '#34d399';
+
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="result-box" style="text-align: left;">
+                        <p><strong>Risk Level:</strong> <span style="color: ${color}; font-weight: bold;">${res.risk_level}</span></p>
+                        <p><strong>Threat Index:</strong> ${res.risk_score}/100</p>
+                        <p><strong>XAI Rationale:</strong></p>
+                        <ul style="padding-left: 15px; font-size: 13px; color: #cbd5e1;">
+                            ${res.explanations.map(exp => `<li>${exp}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } catch(err) {
+                alert('Backend API is not running! Make sure FastAPI is started.');
+            }
+        });
+    </script>
+
+</body>
+</html>
